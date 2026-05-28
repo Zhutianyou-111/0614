@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100-5000 整百数字大转盘</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f0f2f5;
+        }
+        .title {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .turntable-box {
+            position: relative;
+            width: 500px;
+            height: 500px;
+        }
+        /* 转盘主体 */
+        .turntable {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.13, 0.99);
+        }
+        .turntable svg {
+            width: 100%;
+            height: 100%;
+        }
+        /* 中心按钮 */
+        .center-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #ff4757;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px #ff4757;
+            user-select: none;
+        }
+        .center-btn:active {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+        /* 指针 */
+        .pointer {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #2f3542;
+            position: absolute;
+            left: 50%;
+            top: -10px;
+            transform: translateX(-50%);
+            z-index: 9;
+        }
+        /* 结果显示 */
+        .result {
+            margin-top: 30px;
+            font-size: 24px;
+            color: #222;
+            min-height: 36px;
+        }
+    </style>
+</head>
+<body>
+    <h2 class="title">100 - 5000 整百数字大转盘</h2>
+    <div class="turntable-box">
+        <div class="pointer"></div>
+        <div class="turntable" id="turntable"></div>
+        <div class="center-btn" id="startBtn">开始</div>
+    </div>
+    <div class="result" id="result">点击开始转动转盘</div>
+
+    <script>
+        const turntable = document.getElementById('turntable');
+        const startBtn = document.getElementById('startBtn');
+        const result = document.getElementById('result');
+        const totalNum = 50; // 100-5000整百数共50个
+        const singleAngle = 360 / totalNum;
+        let isRunning = false;
+        let currentRotate = 0;
+
+        // 整百数字数组（用于显示在转盘上）
+        const numbers = [];
+        for(let i = 100; i <= 5000; i += 100) {
+            numbers.push(i);
+        }
+        
+        // 可抽中的数字（只包含100-1000的整百数）
+        const availableNumbers = numbers.slice(0, 10); // 前10个是100-1000
+
+        // 使用SVG创建精确的扇形
+        function createSector() {
+            const colorList = ['#2ed573','#1e90ff','#ff7f50','#9b59b6','#ffd32a','#ff3838','#1dd1a1','#5f27cd'];
+            const radius = 250;
+            const centerX = 250;
+            const centerY = 250;
+            
+            let svgHtml = `<svg viewBox="0 0 500 500">`;
+            
+            for(let i = 1; i <= totalNum; i++){
+                const startAngle = (i - 1) * singleAngle;
+                const endAngle = i * singleAngle;
+                
+                const startRad = startAngle * Math.PI / 180;
+                const endRad = endAngle * Math.PI / 180;
+                
+                const x1 = centerX + radius * Math.cos(startRad);
+                const y1 = centerY + radius * Math.sin(startRad);
+                const x2 = centerX + radius * Math.cos(endRad);
+                const y2 = centerY + radius * Math.sin(endRad);
+                
+                const largeArcFlag = singleAngle > 180 ? 1 : 0;
+                
+                const pathD = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+                
+                const color = colorList[i % colorList.length];
+                
+                svgHtml += `<path d="${pathD}" fill="${color}" />`;
+            }
+            
+            svgHtml += '</svg>';
+            turntable.innerHTML = svgHtml;
+        }
+        createSector();
+
+        // 转盘旋转逻辑
+        startBtn.addEventListener('click', () => {
+            if(isRunning) return;
+            isRunning = true;
+            result.innerText = '转盘转动中...';
+            
+            // 只从100-1000的数字中随机选择
+            const randomNum = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+            
+            // 找到这个数字在转盘上的位置
+            const randomIndex = numbers.indexOf(randomNum);
+            
+            const targetAngle = 360 * 5 + randomIndex * singleAngle;
+            currentRotate -= targetAngle;
+            turntable.style.transform = `rotate(${currentRotate}deg)`;
+
+            setTimeout(() => {
+                result.innerText = `🎉 恭喜！抽到数字：${randomNum} 🎉`;
+                isRunning = false;
+            }, 4000);
+        });
+    </script>
+</body>
+</html>
